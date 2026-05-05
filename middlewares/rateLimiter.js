@@ -1,7 +1,8 @@
 const rateLimit = require("express-rate-limit");
+const RATE_LIMIT_WINDOW_MS = 5000;
 
 exports.authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: RATE_LIMIT_WINDOW_MS,
   max: 50,
   message: {
     success: false,
@@ -10,7 +11,7 @@ exports.authLimiter = rateLimit({
 });
 
 exports.financeWriteLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: RATE_LIMIT_WINDOW_MS,
   max: 300,
   message: {
     success: false,
@@ -19,7 +20,7 @@ exports.financeWriteLimiter = rateLimit({
 });
 
 exports.analyticsLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: RATE_LIMIT_WINDOW_MS,
   max: 600,
   message: {
     success: false,
