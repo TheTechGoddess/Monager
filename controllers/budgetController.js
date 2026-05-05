@@ -4,7 +4,10 @@ const {
   updateBudgetService,
   deleteBudgetService,
 } = require("../services/budgetService");
-const { createBudgetSchema, updateBudgetSchema } = require("../middlewares/validator");
+const {
+  createBudgetSchema,
+  updateBudgetSchema,
+} = require("../middlewares/validator");
 
 exports.createBudget = async (req, res) => {
   const { userId } = req.user;

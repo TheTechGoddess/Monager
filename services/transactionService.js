@@ -86,7 +86,11 @@ exports.createTransactionService = async (userId, payload) => {
   });
 
   if (transaction.type === "expense") {
-    await notifyIfBudgetExceeded(userId, transaction.category, transaction.date);
+    await notifyIfBudgetExceeded(
+      userId,
+      transaction.category,
+      transaction.date,
+    );
   }
 
   return transaction;
@@ -185,7 +189,11 @@ exports.updateTransactionService = async (userId, transactionId, payload) => {
   await transaction.populate("category");
 
   if (transaction.type === "expense") {
-    await notifyIfBudgetExceeded(userId, transaction.category._id, transaction.date);
+    await notifyIfBudgetExceeded(
+      userId,
+      transaction.category._id,
+      transaction.date,
+    );
   }
 
   return transaction;

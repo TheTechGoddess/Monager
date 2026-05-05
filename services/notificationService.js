@@ -37,7 +37,10 @@ exports.markNotificationAsReadService = async (userId, notificationId) => {
     throw new Error("Invalid notification id");
   }
 
-  const notification = await Notification.findOne({ _id: notificationId, userId });
+  const notification = await Notification.findOne({
+    _id: notificationId,
+    userId,
+  });
   if (!notification) throw new Error("Notification does not exist!");
 
   notification.read = true;

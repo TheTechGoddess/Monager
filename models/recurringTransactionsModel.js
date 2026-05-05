@@ -45,4 +45,7 @@ const recurringTransactionSchema = mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model("RecurringTransaction", recurringTransactionSchema);
+module.exports = mongoose.model(
+  "RecurringTransaction",
+  recurringTransactionSchema,
+);

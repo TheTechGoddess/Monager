@@ -38,7 +38,9 @@ const normalizeMonth = (monthValue) => {
     return asNumber;
   }
 
-  const monthKey = String(monthValue || "").trim().toLowerCase();
+  const monthKey = String(monthValue || "")
+    .trim()
+    .toLowerCase();
   if (!MONTH_MAP[monthKey]) {
     throw new Error("Invalid month value");
   }
