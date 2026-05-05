@@ -118,3 +118,116 @@ exports.updateCategorySchema = Joi.object({
   .min(1)
   .unknown(false);
 
+exports.createTransactionSchema = Joi.object({
+  amount: Joi.number().required(),
+  type: Joi.string().valid("income", "expense").required(),
+  category: Joi.string().trim().required(),
+  description: Joi.string().trim().min(1).allow(null),
+  date: Joi.date().required(),
+}).unknown(false);
+
+exports.updateTransactionSchema = Joi.object({
+  amount: Joi.number(),
+  type: Joi.string().valid("income", "expense"),
+  category: Joi.string().trim(),
+  description: Joi.string().trim().min(1).allow(null),
+  date: Joi.date(),
+})
+  .min(1)
+  .unknown(false);
+
+exports.getTransactionsQuerySchema = Joi.object({
+  month: Joi.number().integer().min(1).max(12),
+  category: Joi.string().trim(),
+  type: Joi.string().valid("income", "expense"),
+  startDate: Joi.date().iso(),
+  endDate: Joi.date().iso(),
+  amountMin: Joi.number().min(0),
+  amountMax: Joi.number().min(0),
+}).unknown(false);
+
+exports.createBudgetSchema = Joi.object({
+  category: Joi.string().trim().required(),
+  limit: Joi.number().min(0).required(),
+  month: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(1).max(12),
+      Joi.string()
+        .trim()
+        .lowercase()
+        .valid(
+          "january",
+          "february",
+          "march",
+          "april",
+          "may",
+          "june",
+          "july",
+          "august",
+          "september",
+          "october",
+          "november",
+          "december",
+        ),
+    )
+    .required(),
+  year: Joi.number().integer().min(1970).required(),
+}).unknown(false);
+
+exports.updateBudgetSchema = Joi.object({
+  category: Joi.string().trim(),
+  limit: Joi.number().min(0),
+  month: Joi.alternatives().try(
+    Joi.number().integer().min(1).max(12),
+    Joi.string()
+      .trim()
+      .lowercase()
+      .valid(
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ),
+  ),
+  year: Joi.number().integer().min(1970),
+})
+  .min(1)
+  .unknown(false);
+
+exports.createRecurringTransactionSchema = Joi.object({
+  amount: Joi.number().min(0).required(),
+  category: Joi.string().trim().required(),
+  frequency: Joi.string().valid("weekly", "monthly").required(),
+  nextRunDate: Joi.date().required(),
+  description: Joi.string().trim().min(1).allow(null),
+  active: Joi.boolean(),
+}).unknown(false);
+
+exports.updateRecurringTransactionSchema = Joi.object({
+  amount: Joi.number().min(0),
+  category: Joi.string().trim(),
+  frequency: Joi.string().valid("weekly", "monthly"),
+  nextRunDate: Joi.date(),
+  description: Joi.string().trim().min(1).allow(null),
+  active: Joi.boolean(),
+})
+  .min(1)
+  .unknown(false);
+
+exports.monthlyReportQuerySchema = Joi.object({
+  year: Joi.number().integer().min(1970),
+}).unknown(false);
+
+exports.categoryReportQuerySchema = Joi.object({
+  month: Joi.number().integer().min(1).max(12),
+  year: Joi.number().integer().min(1970),
+}).unknown(false);
+

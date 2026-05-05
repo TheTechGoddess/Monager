@@ -7,6 +7,15 @@ const mongoose = require("mongoose");
 const authRouter = require("./routers/authRouter");
 const userRouter = require("./routers/userRouter");
 const categoryRouter = require("./routers/categoryRouter");
+const transactionRouter = require("./routers/transactionRouter");
+const budgetRouter = require("./routers/budgetRouter");
+const dashboardRouter = require("./routers/dashboardRouter");
+const reportRouter = require("./routers/reportRouter");
+const recurringTransactionRouter = require("./routers/recurringTransactionRouter");
+const notificationRouter = require("./routers/notificationRouter");
+const {
+  processRecurringTransactionsService,
+} = require("./services/recurringTransactionService");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -20,6 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/transactions", transactionRouter);
+app.use("/api/budgets", budgetRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/reports", reportRouter);
+app.use("/api/recurring-transactions", recurringTransactionRouter);
+app.use("/api/notifications", notificationRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Monexa backend is alive 🚀" });
@@ -36,6 +51,17 @@ const startServer = async () => {
     });
 
     console.log("Database Connected");
+
+    setInterval(async () => {
+      try {
+        const { createdCount } = await processRecurringTransactionsService();
+        if (createdCount) {
+          console.log(`Recurring transactions processed: ${createdCount}`);
+        }
+      } catch (err) {
+        console.error("Recurring transactions processing failed:", err.message);
+      }
+    }, 60 * 1000);
 
     app.listen(PORT, () => {
       console.log("Listening on port", PORT);
