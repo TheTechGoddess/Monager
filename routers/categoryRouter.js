@@ -1,22 +1,19 @@
 const express = require("express");
 const categoryController = require("../controllers/categoryController");
 const { identifier } = require("../middlewares/identification");
-const { financeWriteLimiter } = require("../middlewares/rateLimiter");
 
 const router = express.Router();
 
-router.post("/", identifier, financeWriteLimiter, categoryController.createCategory);
+router.post("/", identifier, categoryController.createCategory);
 router.get("/", identifier, categoryController.getCategories);
 router.patch(
   "/:id",
   identifier,
-  financeWriteLimiter,
   categoryController.patchCategory,
 );
 router.delete(
   "/:id",
   identifier,
-  financeWriteLimiter,
   categoryController.deleteCategory,
 );
 
