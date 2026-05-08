@@ -6,6 +6,24 @@ const transport = require("../middlewares/sendMail");
 
 const TOKEN_EXPIRY = "8h";
 const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const MAIL_TIMEOUT_MS = 15000;
+
+const sendMailWithTimeout = async (mailOptions) => {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error("Email service timeout. Please try again shortly."));
+    }, MAIL_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([transport.sendMail(mailOptions), timeoutPromise]);
+  } catch (err) {
+    if (err?.message === "Email service timeout. Please try again shortly.") {
+      throw err;
+    }
+    throw new Error("Unable to send email at the moment. Please try again.");
+  }
+};
 
 // ------------------ SIGNUP ------------------
 exports.signupService = async (email, password) => {
@@ -64,7 +82,7 @@ exports.sendVerificationCodeService = async (email) => {
 
   const codeValue = crypto.randomInt(100000, 999999).toString();
 
-  const info = await transport.sendMail({
+  const info = await sendMailWithTimeout({
     from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
     to: user.email,
     subject: "Verification Code",
@@ -135,7 +153,7 @@ exports.sendForgotPasswordCodeService = async (email) => {
   if (!user) throw new Error("User does not exist!");
 
   const codeValue = crypto.randomInt(100000, 999999).toString();
-  const info = await transport.sendMail({
+  const info = await sendMailWithTimeout({
     from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
     to: user.email,
     subject: "Verification Code for Forgot Password",
