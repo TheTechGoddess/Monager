@@ -9,19 +9,29 @@ const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 const MAIL_TIMEOUT_MS = 15000;
 
 const sendMailWithTimeout = async (mailOptions) => {
+  let timeoutId;
+
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => {
-      reject(new Error("Email service timeout. Please try again shortly."));
+    timeoutId = setTimeout(() => {
+      reject(new Error("Email service timeout."));
     }, MAIL_TIMEOUT_MS);
   });
 
   try {
-    return await Promise.race([transport.sendMail(mailOptions), timeoutPromise]);
+    const result = await Promise.race([
+      transport.sendMail(mailOptions),
+      timeoutPromise,
+    ]);
+
+    clearTimeout(timeoutId);
+
+    return result;
   } catch (err) {
-    if (err?.message === "Email service timeout. Please try again shortly.") {
-      throw err;
-    }
-    throw new Error("Unable to send email at the moment. Please try again.");
+    clearTimeout(timeoutId);
+
+    console.log("FULL EMAIL ERROR:", err);
+
+    throw err;
   }
 };
 
