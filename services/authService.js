@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
-const transport = require("../middlewares/sendMail");
+const { sendMail } = require("../middlewares/sendMail");
 
 const TOKEN_EXPIRY = "8h";
 const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5 minutes
@@ -19,7 +19,7 @@ const sendMailWithTimeout = async (mailOptions) => {
 
   try {
     const result = await Promise.race([
-      transport.sendMail(mailOptions),
+      sendMail(mailOptions),
       timeoutPromise,
     ]);
 
@@ -93,7 +93,7 @@ exports.sendVerificationCodeService = async (email) => {
   const codeValue = crypto.randomInt(100000, 999999).toString();
 
   const info = await sendMailWithTimeout({
-    from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+    from: process.env.RESEND_FROM_EMAIL,
     to: user.email,
     subject: "Verification Code",
     html: `<h1>Your verification code is ${codeValue}</h1>`,
@@ -164,7 +164,7 @@ exports.sendForgotPasswordCodeService = async (email) => {
 
   const codeValue = crypto.randomInt(100000, 999999).toString();
   const info = await sendMailWithTimeout({
-    from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
+    from: process.env.RESEND_FROM_EMAIL,
     to: user.email,
     subject: "Verification Code for Forgot Password",
     html: `<h1>Your verification code is ${codeValue}</h1>`,
