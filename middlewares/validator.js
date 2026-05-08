@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { CATEGORY_TYPES, HEX_COLOR_PATTERN } = require("../utils/categoryMeta");
 
 const passwordSchema = Joi.string()
   .min(8)
@@ -104,23 +105,25 @@ exports.updateUserProfileSchema = Joi.object({
 
 exports.createCategorySchema = Joi.object({
   name: Joi.string().trim().min(1).required(),
-  type: Joi.string().valid("income", "expense").required(),
-  icon: Joi.string().trim().min(1).allow(null),
-  color: Joi.string().trim().min(1).allow(null),
+  type: Joi.string()
+    .valid(...CATEGORY_TYPES)
+    .required(),
+  color: Joi.string().trim().pattern(HEX_COLOR_PATTERN).allow(null),
 }).unknown(false);
 
 exports.updateCategorySchema = Joi.object({
   name: Joi.string().trim().min(1),
-  type: Joi.string().valid("income", "expense"),
-  icon: Joi.string().trim().min(1).allow(null),
-  color: Joi.string().trim().min(1).allow(null),
+  type: Joi.string().valid(...CATEGORY_TYPES),
+  color: Joi.string().trim().pattern(HEX_COLOR_PATTERN).allow(null),
 })
   .min(1)
   .unknown(false);
 
 exports.createTransactionSchema = Joi.object({
   amount: Joi.number().required(),
-  type: Joi.string().valid("income", "expense").required(),
+  type: Joi.string()
+    .valid(...CATEGORY_TYPES)
+    .required(),
   category: Joi.string().trim().required(),
   description: Joi.string().trim().min(1).allow(null),
   date: Joi.date().required(),
@@ -128,7 +131,7 @@ exports.createTransactionSchema = Joi.object({
 
 exports.updateTransactionSchema = Joi.object({
   amount: Joi.number(),
-  type: Joi.string().valid("income", "expense"),
+  type: Joi.string().valid(...CATEGORY_TYPES),
   category: Joi.string().trim(),
   description: Joi.string().trim().min(1).allow(null),
   date: Joi.date(),
@@ -139,11 +142,12 @@ exports.updateTransactionSchema = Joi.object({
 exports.getTransactionsQuerySchema = Joi.object({
   month: Joi.number().integer().min(1).max(12),
   category: Joi.string().trim(),
-  type: Joi.string().valid("income", "expense"),
+  type: Joi.string().valid(...CATEGORY_TYPES),
   startDate: Joi.date().iso(),
   endDate: Joi.date().iso(),
   amountMin: Joi.number().min(0),
   amountMax: Joi.number().min(0),
+  limit: Joi.number().integer().min(1).max(100),
 }).unknown(false);
 
 exports.createBudgetSchema = Joi.object({

@@ -144,7 +144,8 @@ exports.getTransactionsService = async (userId, filters = {}) => {
 
   const transactions = await Transaction.find(query)
     .populate("category")
-    .sort({ date: -1, createdAt: -1 });
+    .sort({ date: -1, createdAt: -1 })
+    .limit(filters.limit ? Number(filters.limit) : 0);
 
   return transactions;
 };
