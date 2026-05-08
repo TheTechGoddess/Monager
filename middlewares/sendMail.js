@@ -23,7 +23,11 @@ const sendMail = async ({ from, to, subject, html, text }) => {
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const recipients = Array.isArray(to) ? to : [to];
-  const sender = from || process.env.RESEND_FROM_EMAIL;
+  const sender = (from || process.env.RESEND_FROM_EMAIL || "").trim();
+
+  if (!/^[^<\s]+@[^<\s]+\.[^<\s>]+/.test(sender) && !sender.includes("<")) {
+    throw new Error(`Invalid from format: ${sender}`);
+  }
 
   if (!sender) {
     throw new Error("RESEND_FROM_EMAIL is not configured");
