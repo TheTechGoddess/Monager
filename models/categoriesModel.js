@@ -38,11 +38,10 @@ const categorySchema = mongoose.Schema(
   },
 );
 
-categorySchema.pre("validate", function syncIconWithType(next) {
+categorySchema.pre("validate", function syncIconWithType() {
   if (this.type) {
     this.icon = resolveCategoryIcon(this.type);
   }
-  next();
 });
 
 module.exports = mongoose.model("Category", categorySchema);
