@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { CATEGORY_TYPES, HEX_COLOR_PATTERN } = require("../utils/categoryMeta");
+const { CATEGORY_TYPES } = require("../utils/categoryMeta");
 
 const passwordSchema = Joi.string()
   .min(8)
@@ -108,13 +108,11 @@ exports.createCategorySchema = Joi.object({
   type: Joi.string()
     .valid(...CATEGORY_TYPES)
     .required(),
-  color: Joi.string().trim().pattern(HEX_COLOR_PATTERN).allow(null),
 }).unknown(false);
 
 exports.updateCategorySchema = Joi.object({
   name: Joi.string().trim().min(1),
   type: Joi.string().valid(...CATEGORY_TYPES),
-  color: Joi.string().trim().pattern(HEX_COLOR_PATTERN).allow(null),
 })
   .min(1)
   .unknown(false);

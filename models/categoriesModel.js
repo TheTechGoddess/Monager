@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
-const { CATEGORY_TYPES, resolveCategoryIcon } = require("../utils/categoryMeta");
+const {
+  CATEGORY_TYPES,
+  resolveCategoryIcon,
+  resolveCategoryColor,
+} = require("../utils/categoryMeta");
 
 const categorySchema = mongoose.Schema(
   {
@@ -29,7 +33,9 @@ const categorySchema = mongoose.Schema(
     },
     color: {
       type: String,
-      default: null,
+      default: function colorDefault() {
+        return resolveCategoryColor(this.type);
+      },
       trim: true,
     },
   },
@@ -41,6 +47,7 @@ const categorySchema = mongoose.Schema(
 categorySchema.pre("validate", function syncIconWithType() {
   if (this.type) {
     this.icon = resolveCategoryIcon(this.type);
+    this.color = resolveCategoryColor(this.type);
   }
 });
 
