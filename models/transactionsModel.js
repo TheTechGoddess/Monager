@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { CATEGORY_TYPES } = require("../utils/categoryMeta");
 
 const transactionSchema = mongoose.Schema(
   {
@@ -8,7 +9,7 @@ const transactionSchema = mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["income", "expense"],
+      enum: CATEGORY_TYPES,
       required: [true, "Transaction type is required"],
       trim: true,
     },

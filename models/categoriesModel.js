@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { CATEGORY_TYPES, resolveCategoryIcon } = require("../utils/categoryMeta");
 
 const categorySchema = mongoose.Schema(
   {
@@ -9,7 +10,7 @@ const categorySchema = mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["income", "expense"],
+      enum: CATEGORY_TYPES,
       required: [true, "Category type is required"],
       trim: true,
     },
@@ -21,7 +22,9 @@ const categorySchema = mongoose.Schema(
     },
     icon: {
       type: String,
-      default: null,
+      default: function iconDefault() {
+        return resolveCategoryIcon(this.type);
+      },
       trim: true,
     },
     color: {
@@ -34,5 +37,12 @@ const categorySchema = mongoose.Schema(
     timestamps: true,
   },
 );
+
+categorySchema.pre("validate", function syncIconWithType(next) {
+  if (this.type) {
+    this.icon = resolveCategoryIcon(this.type);
+  }
+  next();
+});
 
 module.exports = mongoose.model("Category", categorySchema);

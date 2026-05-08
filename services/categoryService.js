@@ -1,7 +1,12 @@
 const Category = require("../models/categoriesModel");
 const mongoose = require("mongoose");
+const {
+  generateRandomHexColor,
+  normalizeHexColor,
+  resolveCategoryIcon,
+} = require("../utils/categoryMeta");
 
-const PATCHABLE_FIELDS = ["name", "type", "icon", "color"];
+const PATCHABLE_FIELDS = ["name", "type", "color"];
 
 const validateCategoryId = (categoryId) => {
   if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -10,8 +15,14 @@ const validateCategoryId = (categoryId) => {
 };
 
 exports.createCategoryService = async (userId, payload) => {
+  const normalizedColor = normalizeHexColor(payload.color);
+  const resolvedType = payload.type;
+
   const category = await Category.create({
     ...payload,
+    type: resolvedType,
+    icon: resolveCategoryIcon(resolvedType),
+    color: normalizedColor || generateRandomHexColor(),
     userId,
   });
 
@@ -39,9 +50,19 @@ exports.updateCategoryService = async (userId, categoryId, payload) => {
     throw new Error(`Unsupported field(s): ${invalidFields.join(", ")}`);
   }
 
-  payloadKeys.forEach((field) => {
-    category[field] = payload[field];
-  });
+  const nextType = payload.type || category.type;
+
+  if (payload.name !== undefined) {
+    category.name = payload.name;
+  }
+  if (payload.type !== undefined) {
+    category.type = payload.type;
+    category.icon = resolveCategoryIcon(nextType);
+  }
+  if (payload.color !== undefined) {
+    const normalizedColor = normalizeHexColor(payload.color);
+    category.color = normalizedColor || generateRandomHexColor();
+  }
 
   await category.save();
   return category;
