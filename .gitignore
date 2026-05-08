@@ -1,3 +1,7 @@
 .env
 node_modules
 /Monexa Frontend
+postman/
+*.postman_collection.json
+*.postman_environment.json
+/docs
