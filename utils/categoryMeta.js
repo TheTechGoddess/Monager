@@ -9,7 +9,7 @@ const CATEGORY_TYPE_ICON_MAP = {
 const CATEGORY_TYPE_COLOR_MAP = {
   income: "#86BB75",
   expense: "#FB7185",
-  investments: "#2E2357",
+  investments: "#F25FC5",
 };
 
 const resolveCategoryIcon = (type) => {
