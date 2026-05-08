@@ -27,16 +27,16 @@ const baseEmailTemplate = ({
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
   </head>
-  <body style="margin:0;padding:0;background:${SOFT_BACKGROUND_COLOR};font-family:Arial,sans-serif;color:#111827;">
+  <body style="margin:0;padding:0;background:${PRIMARY_COLOR};font-family:Arial,sans-serif;color:#111827;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SOFT_BACKGROUND_COLOR};padding:24px 12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PRIMARY_COLOR};padding:24px 12px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
             <tr>
-              <td style="background:${PRIMARY_COLOR};padding:24px;text-align:center;">
+              <td style="background:${SOFT_BACKGROUND_COLOR};padding:24px;text-align:center;">
                 <img src="${LOGO_URL}" alt="${APP_NAME} logo" style="max-height:56px;display:block;margin:0 auto 4px auto;" />
-                <p style="margin:0;font-size:13px;color:#ffffff;">${APP_TAGLINE}</p>
+                <p style="margin:0;font-size:13px;color:${PRIMARY_COLOR};">${APP_TAGLINE}</p>
               </td>
             </tr>
             <tr>
