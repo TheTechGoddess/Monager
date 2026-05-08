@@ -19,16 +19,15 @@ const {
 
 // ------------------ SIGNUP ------------------
 exports.signup = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const { error } = signupSchema.validate({ email, password });
+    const { error, value } = signupSchema.validate(req.body);
     if (error) throw new Error(error.details[0].message);
 
-    const user = await signupService(email, password);
+    await signupService(value);
 
     res.status(201).json({
       success: true,
-      message: "Your account has been created successfully"
+      message: "Your account has been created successfully",
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

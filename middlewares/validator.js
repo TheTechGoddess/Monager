@@ -17,6 +17,9 @@ const passwordSchema = Joi.string()
   });
 
 exports.signupSchema = Joi.object({
+  first_name: Joi.string().trim().min(1).required(),
+  last_name: Joi.string().trim().min(1).required(),
+  phone_number: Joi.string().trim().min(1).required(),
   email: Joi.string()
     .min(6)
     .max(60)

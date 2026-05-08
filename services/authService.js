@@ -3,6 +3,10 @@ const crypto = require("crypto");
 const User = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const { sendMail } = require("../middlewares/sendMail");
+const {
+  buildVerificationCodeEmail,
+  buildForgotPasswordCodeEmail,
+} = require("../utils/emailTemplates");
 
 const TOKEN_EXPIRY = "8h";
 const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5 minutes
@@ -36,13 +40,22 @@ const sendMailWithTimeout = async (mailOptions) => {
 };
 
 // ------------------ SIGNUP ------------------
-exports.signupService = async (email, password) => {
+exports.signupService = async ({
+  first_name,
+  last_name,
+  phone_number,
+  email,
+  password,
+}) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new Error("User already exists!");
 
   const hashedPassword = await doHash(password, 12);
 
   const newUser = new User({
+    first_name,
+    last_name,
+    phone_number,
     email,
     password: hashedPassword,
     active: true,
@@ -91,12 +104,14 @@ exports.sendVerificationCodeService = async (email) => {
   if (user.verified) throw new Error("You are already verified");
 
   const codeValue = crypto.randomInt(100000, 999999).toString();
+  const emailTemplate = buildVerificationCodeEmail(codeValue);
 
   const info = await sendMailWithTimeout({
     from: process.env.RESEND_FROM_EMAIL,
     to: user.email,
     subject: "Verification Code",
-    html: `<h1>Your verification code is ${codeValue}</h1>`,
+    html: emailTemplate.html,
+    text: emailTemplate.text,
   });
 
   if (info.accepted[0] !== user.email) {
@@ -163,11 +178,13 @@ exports.sendForgotPasswordCodeService = async (email) => {
   if (!user) throw new Error("User does not exist!");
 
   const codeValue = crypto.randomInt(100000, 999999).toString();
+  const emailTemplate = buildForgotPasswordCodeEmail(codeValue);
   const info = await sendMailWithTimeout({
     from: process.env.RESEND_FROM_EMAIL,
     to: user.email,
     subject: "Verification Code for Forgot Password",
-    html: `<h1>Your verification code is ${codeValue}</h1>`,
+    html: emailTemplate.html,
+    text: emailTemplate.text,
   });
 
   if (info.accepted[0] !== user.email) throw new Error("Code sending failed!");
