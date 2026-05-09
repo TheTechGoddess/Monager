@@ -28,18 +28,7 @@ exports.signupSchema = Joi.object({
       tlds: { allow: ["com", "net"] },
     }),
 
-  password: Joi.string()
-    .min(8)
-    .required()
-    .pattern(/[a-z]/, { name: "lowercase" })
-    .pattern(/\d/, { name: "digit" })
-    .messages({
-      "string.base": "Password must be a string.",
-      "string.empty": "Password is required.",
-      "string.min": "Password must be at least 8 characters long.",
-      "string.pattern.name": "Password must contain at least one {#name}.",
-      "any.required": "Password is required.",
-    }),
+  password: passwordSchema,
 });
 
 exports.loginSchema = Joi.object({
