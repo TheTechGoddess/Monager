@@ -1,4 +1,10 @@
 const User = require("../models/usersModel");
+const Category = require("../models/categoriesModel");
+const RecurringTransaction = require("../models/recurringTransactionsModel");
+const {
+  resolveCategoryIcon,
+  resolveCategoryColor,
+} = require("../utils/categoryMeta");
 
 const PATCHABLE_FIELDS = [
   "first_name",
@@ -10,6 +16,125 @@ const PATCHABLE_FIELDS = [
   "phone_number",
 ];
 const MAX_PROFILE_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+const SETTINGS_INCOME_SIGNATURE_PREFIX = "settings-income:";
+const SETTINGS_TAX_SIGNATURE = "settings-tax";
+
+const getNextMonthlyRunDate = () => {
+  const now = new Date();
+  const nextMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  );
+  const day = now.getUTCDate();
+  const lastDay = new Date(
+    Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  return new Date(
+    Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth(), Math.min(day, lastDay)),
+  );
+};
+
+const ensureUserCategoryByNameAndType = async (userId, name, type) => {
+  const existing = await Category.findOne({
+    userId,
+    type,
+    name: { $regex: `^${String(name).trim()}$`, $options: "i" },
+  });
+  if (existing) return existing;
+
+  return Category.create({
+    userId,
+    name,
+    type,
+    icon: resolveCategoryIcon(type),
+    color: resolveCategoryColor(type),
+  });
+};
+
+const syncMonthlyIncomeRecurring = async (userId, monthlyIncome = []) => {
+  const salaryCategory = await ensureUserCategoryByNameAndType(
+    userId,
+    "Salary",
+    "income",
+  );
+  const nextRunDate = getNextMonthlyRunDate();
+
+  const activeSignatures = [];
+  for (const item of monthlyIncome) {
+    const company = String(item.company || "").trim();
+    const amount = Number(item.income);
+    if (!company || !Number.isFinite(amount) || amount <= 0) continue;
+
+    const signature = `${SETTINGS_INCOME_SIGNATURE_PREFIX}${company.toLowerCase()}`;
+    activeSignatures.push(signature);
+
+    await RecurringTransaction.findOneAndUpdate(
+      { userId, signature },
+      {
+        $set: {
+          amount,
+          category: salaryCategory._id,
+          frequency: "monthly",
+          nextRunDate,
+          description: `Income source: ${company}`,
+          active: true,
+          mode: "auto_create",
+          autoDetected: false,
+          signature,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+  }
+
+  const deactivateFilter = {
+    userId,
+    signature: { $regex: `^${SETTINGS_INCOME_SIGNATURE_PREFIX}` },
+  };
+  if (activeSignatures.length) {
+    deactivateFilter.$and = [{ signature: { $nin: activeSignatures } }];
+  }
+
+  await RecurringTransaction.updateMany(deactivateFilter, {
+    $set: { active: false },
+  });
+};
+
+const syncTaxRecurring = async (userId, tax) => {
+  const nextRunDate = getNextMonthlyRunDate();
+  const amount = Number(tax);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    await RecurringTransaction.updateMany(
+      { userId, signature: SETTINGS_TAX_SIGNATURE },
+      { $set: { active: false } },
+    );
+    return;
+  }
+
+  const taxCategory = await ensureUserCategoryByNameAndType(
+    userId,
+    "Taxes",
+    "expense",
+  );
+
+  await RecurringTransaction.findOneAndUpdate(
+    { userId, signature: SETTINGS_TAX_SIGNATURE },
+    {
+      $set: {
+        amount,
+        category: taxCategory._id,
+        frequency: "monthly",
+        nextRunDate,
+        description: "Monthly tax payment",
+        active: true,
+        mode: "auto_create",
+        autoDetected: false,
+        signature: SETTINGS_TAX_SIGNATURE,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+};
 
 exports.getCurrentUserService = async (userId) => {
   const user = await User.findById(userId).select(
@@ -44,6 +169,14 @@ exports.updateCurrentUserService = async (userId, payload) => {
   });
 
   await user.save();
+
+  if (Object.prototype.hasOwnProperty.call(payload, "monthly_income")) {
+    await syncMonthlyIncomeRecurring(userId, payload.monthly_income || []);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, "tax")) {
+    await syncTaxRecurring(userId, payload.tax);
+  }
+
   return user;
 };
 

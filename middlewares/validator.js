@@ -128,6 +128,9 @@ exports.createTransactionSchema = Joi.object({
   category: Joi.string().trim().required(),
   description: Joi.string().trim().min(1).allow(null),
   date: Joi.date().required(),
+  isRecurring: Joi.boolean(),
+  recurringMode: Joi.string().valid("auto_create", "recommendation"),
+  recurringFrequency: Joi.string().valid("weekly", "monthly"),
 }).unknown(false);
 
 exports.updateTransactionSchema = Joi.object({
@@ -149,6 +152,7 @@ exports.getTransactionsQuerySchema = Joi.object({
   amountMin: Joi.number().min(0),
   amountMax: Joi.number().min(0),
   limit: Joi.number().integer().min(1).max(100),
+  page: Joi.number().integer().min(1),
 }).unknown(false);
 
 exports.createBudgetSchema = Joi.object({
@@ -214,6 +218,7 @@ exports.createRecurringTransactionSchema = Joi.object({
   nextRunDate: Joi.date().required(),
   description: Joi.string().trim().min(1).allow(null),
   active: Joi.boolean(),
+  mode: Joi.string().valid("auto_create", "recommendation"),
 }).unknown(false);
 
 exports.updateRecurringTransactionSchema = Joi.object({
@@ -223,6 +228,7 @@ exports.updateRecurringTransactionSchema = Joi.object({
   nextRunDate: Joi.date(),
   description: Joi.string().trim().min(1).allow(null),
   active: Joi.boolean(),
+  mode: Joi.string().valid("auto_create", "recommendation"),
 })
   .min(1)
   .unknown(false);
@@ -234,4 +240,19 @@ exports.monthlyReportQuerySchema = Joi.object({
 exports.categoryReportQuerySchema = Joi.object({
   month: Joi.number().integer().min(1).max(12),
   year: Joi.number().integer().min(1970),
+}).unknown(false);
+
+exports.transactionExportQuerySchema = Joi.object({
+  format: Joi.string().valid("csv", "pdf").required(),
+  month: Joi.number().integer().min(1).max(12),
+  year: Joi.number().integer().min(1970),
+  startMonth: Joi.number().integer().min(1).max(12),
+  startYear: Joi.number().integer().min(1970),
+  endMonth: Joi.number().integer().min(1).max(12),
+  endYear: Joi.number().integer().min(1970),
+}).unknown(false);
+
+exports.submitRecurringRecommendationsSchema = Joi.object({
+  recurringTransactionIds: Joi.array().items(Joi.string().trim()).min(1).required(),
+  date: Joi.date(),
 }).unknown(false);

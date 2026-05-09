@@ -10,6 +10,21 @@ router.post(
   recurringTransactionController.createRecurringTransaction,
 );
 router.get("/", identifier, recurringTransactionController.getRecurringTransactions);
+router.get(
+  "/recommendations",
+  identifier,
+  recurringTransactionController.getRecurringRecommendations,
+);
+router.post(
+  "/recommendations/submit",
+  identifier,
+  recurringTransactionController.submitRecurringRecommendations,
+);
+router.delete(
+  "/recommendations/:id",
+  identifier,
+  recurringTransactionController.dismissRecurringRecommendation,
+);
 router.patch(
   "/:id",
   identifier,

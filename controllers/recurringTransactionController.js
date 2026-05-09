@@ -1,12 +1,17 @@
 const {
   createRecurringTransactionService,
   getRecurringTransactionsService,
+  getRecurringRecommendationsService,
+  submitRecurringRecommendationsService,
+  dismissRecurringRecommendationService,
   updateRecurringTransactionService,
   deleteRecurringTransactionService,
 } = require("../services/recurringTransactionService");
 const {
   createRecurringTransactionSchema,
   updateRecurringTransactionSchema,
+  categoryReportQuerySchema,
+  submitRecurringRecommendationsSchema,
 } = require("../middlewares/validator");
 
 exports.createRecurringTransaction = async (req, res) => {
@@ -42,6 +47,74 @@ exports.getRecurringTransactions = async (req, res) => {
     res.json({
       success: true,
       recurringTransactions,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.getRecurringRecommendations = async (req, res) => {
+  const { userId } = req.user;
+
+  try {
+    const { error } = categoryReportQuerySchema.validate(req.query);
+    if (error) throw new Error(error.details[0].message);
+
+    const recommendations = await getRecurringRecommendationsService(
+      userId,
+      req.query,
+    );
+    res.json({
+      success: true,
+      recommendations,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.submitRecurringRecommendations = async (req, res) => {
+  const { userId } = req.user;
+
+  try {
+    const { error } = submitRecurringRecommendationsSchema.validate(req.body);
+    if (error) throw new Error(error.details[0].message);
+
+    const transactions = await submitRecurringRecommendationsService(
+      userId,
+      req.body,
+    );
+    res.status(201).json({
+      success: true,
+      message: "Recommendations submitted successfully",
+      transactions,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.dismissRecurringRecommendation = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+
+  try {
+    const { error } = categoryReportQuerySchema.validate(req.query);
+    if (error) throw new Error(error.details[0].message);
+
+    await dismissRecurringRecommendationService(userId, id, req.query);
+    res.json({
+      success: true,
+      message: "Recommendation dismissed for selected month",
     });
   } catch (err) {
     res.status(400).json({

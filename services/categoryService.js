@@ -6,6 +6,28 @@ const {
 } = require("../utils/categoryMeta");
 
 const PATCHABLE_FIELDS = ["name", "type"];
+const DEFAULT_CATEGORIES = [
+  { name: "Salary", type: "income" },
+  { name: "Freelance", type: "income" },
+  { name: "Food", type: "expense" },
+  { name: "Transport", type: "expense" },
+  { name: "Utilities", type: "expense" },
+  { name: "Stock", type: "investments" },
+  { name: "Crypto", type: "investments" },
+  { name: "Real Estate", type: "investments" },
+  { name: "Money Market", type: "investments" },
+  { name: "Rent", type: "expense" },
+  { name: "Bills", type: "expense" },
+  { name: "Entertainment", type: "expense" },
+  { name: "Health", type: "expense" },
+  { name: "Education", type: "expense" },
+  { name: "Shopping", type: "expense" },
+  { name: "Travel", type: "expense" },
+  { name: "Gifts", type: "expense" },
+  { name: "Taxes", type: "expense" },
+  { name: "Insurance", type: "expense" },
+  { name: "Other", type: "expense" },
+];
 
 const validateCategoryId = (categoryId) => {
   if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -70,4 +92,18 @@ exports.deleteCategoryService = async (userId, categoryId) => {
   if (!category) throw new Error("Category does not exist!");
 
   return true;
+};
+
+exports.seedDefaultCategoriesForUserService = async (userId) => {
+  const existingCount = await Category.countDocuments({ userId });
+  if (existingCount) return [];
+
+  return Category.insertMany(
+    DEFAULT_CATEGORIES.map((item) => ({
+      ...item,
+      userId,
+      icon: resolveCategoryIcon(item.type),
+      color: resolveCategoryColor(item.type),
+    })),
+  );
 };

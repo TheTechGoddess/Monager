@@ -10,6 +10,7 @@ router.post(
   transactionController.createTransaction,
 );
 router.get("/", identifier, transactionController.getTransactions);
+router.get("/export", identifier, transactionController.exportTransactions);
 router.patch(
   "/:id",
   identifier,

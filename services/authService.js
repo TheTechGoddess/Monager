@@ -4,6 +4,9 @@ const User = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const { sendMail } = require("../middlewares/sendMail");
 const {
+  seedDefaultCategoriesForUserService,
+} = require("./categoryService");
+const {
   buildVerificationCodeEmail,
   buildForgotPasswordCodeEmail,
 } = require("../utils/emailTemplates");
@@ -62,6 +65,7 @@ exports.signupService = async ({
   });
 
   const savedUser = await newUser.save();
+  await seedDefaultCategoriesForUserService(savedUser._id);
   const user = savedUser.toObject();
   delete user.password;
 

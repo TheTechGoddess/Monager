@@ -39,6 +39,30 @@ const recurringTransactionSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    mode: {
+      type: String,
+      enum: ["auto_create", "recommendation"],
+      default: "recommendation",
+      trim: true,
+    },
+    dismissedMonths: {
+      type: [String],
+      default: [],
+    },
+    submittedMonths: {
+      type: [String],
+      default: [],
+    },
+    autoDetected: {
+      type: Boolean,
+      default: false,
+    },
+    signature: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
   },
   {
     timestamps: true,

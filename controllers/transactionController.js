@@ -1,6 +1,7 @@
 const {
   createTransactionService,
   getTransactionsService,
+  getTransactionsExportService,
   updateTransactionService,
   deleteTransactionService,
 } = require("../services/transactionService");
@@ -8,6 +9,7 @@ const {
   createTransactionSchema,
   updateTransactionSchema,
   getTransactionsQuerySchema,
+  transactionExportQuerySchema,
 } = require("../middlewares/validator");
 
 exports.createTransaction = async (req, res) => {
@@ -55,10 +57,44 @@ exports.getTransactions = async (req, res) => {
     const transactions = await getTransactionsService(userId, req.query);
     res.json({
       success: true,
-      transactions,
+      transactions: transactions.transactions,
+      pagination: transactions.pagination,
     });
   } catch (err) {
     res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.exportTransactions = async (req, res) => {
+  const { userId } = req.user;
+
+  try {
+    const { error } = transactionExportQuerySchema.validate(req.query);
+    if (error) throw new Error(error.details[0].message);
+
+    const exported = await getTransactionsExportService(userId, req.query);
+    const filenameDate = new Date().toISOString().slice(0, 10);
+
+    if (req.query.format === "csv") {
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="transactions-${filenameDate}.csv"`,
+      );
+      return res.status(200).send(exported.csv);
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="transactions-${filenameDate}.pdf"`,
+    );
+    return res.status(200).send(exported.pdf);
+  } catch (err) {
+    return res.status(400).json({
       success: false,
       message: err.message,
     });
