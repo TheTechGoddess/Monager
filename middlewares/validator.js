@@ -139,6 +139,9 @@ exports.updateTransactionSchema = Joi.object({
   category: Joi.string().trim(),
   description: Joi.string().trim().min(1).allow(null),
   date: Joi.date(),
+  isRecurring: Joi.boolean(),
+  recurringMode: Joi.string().valid("auto_create", "recommendation"),
+  recurringFrequency: Joi.string().valid("weekly", "monthly"),
 })
   .min(1)
   .unknown(false);

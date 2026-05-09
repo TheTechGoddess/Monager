@@ -30,6 +30,12 @@ const recurringTransactionSchema = mongoose.Schema(
       required: true,
       index: true,
     },
+    sourceTransaction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Transaction",
+      default: null,
+      index: true,
+    },
     description: {
       type: String,
       default: null,

@@ -34,6 +34,16 @@ const transactionSchema = mongoose.Schema(
       required: true,
       index: true,
     },
+    isRecurring: {
+      type: Boolean,
+      default: false,
+    },
+    recurringTransaction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RecurringTransaction",
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
