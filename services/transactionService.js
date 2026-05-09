@@ -208,6 +208,78 @@ const syncTransactionRecurringSettings = async (
   return recurring;
 };
 
+const getTransactionId = (transaction) => String(transaction?._id || "");
+
+const getRecurringId = (recurring) => {
+  if (!recurring) return null;
+  return String(recurring?._id || recurring);
+};
+
+const getTransactionSignature = (transaction) =>
+  buildRecurringSignature({
+    type: transaction.type,
+    categoryId: getCategoryId(transaction.category),
+    amount: transaction.amount,
+    description: transaction.description,
+  });
+
+const attachRecurringMetadata = (transaction, recurring) => {
+  const data =
+    typeof transaction.toObject === "function"
+      ? transaction.toObject()
+      : { ...transaction };
+  const activeRecurring = recurring && recurring.active !== false ? recurring : null;
+
+  data.isRecurring = Boolean(activeRecurring);
+  data.recurringTransaction = activeRecurring || null;
+  data.recurringMode = activeRecurring?.mode || null;
+  data.recurringFrequency = activeRecurring?.frequency || null;
+
+  return data;
+};
+
+const hydrateTransactionsRecurringMetadata = async (userId, transactions = []) => {
+  if (!transactions.length) return [];
+
+  const recurringIds = transactions
+    .map((transaction) => getRecurringId(transaction.recurringTransaction))
+    .filter(Boolean);
+  const transactionIds = transactions.map((transaction) => transaction._id);
+  const signatures = transactions.map(getTransactionSignature);
+
+  const recurringItems = await RecurringTransaction.find({
+    userId,
+    $or: [
+      { _id: { $in: recurringIds } },
+      { sourceTransaction: { $in: transactionIds } },
+      { signature: { $in: signatures } },
+    ],
+  }).populate("category");
+
+  const byId = new Map();
+  const bySourceTransaction = new Map();
+  const bySignature = new Map();
+
+  recurringItems.forEach((item) => {
+    byId.set(String(item._id), item);
+    if (item.sourceTransaction) {
+      bySourceTransaction.set(String(item.sourceTransaction), item);
+    }
+    if (item.signature) {
+      bySignature.set(item.signature, item);
+    }
+  });
+
+  return transactions.map((transaction) => {
+    const recurring =
+      byId.get(getRecurringId(transaction.recurringTransaction)) ||
+      bySourceTransaction.get(getTransactionId(transaction)) ||
+      bySignature.get(getTransactionSignature(transaction));
+
+    return attachRecurringMetadata(transaction, recurring);
+  });
+};
+
 exports.createTransactionService = async (userId, payload) => {
   const {
     isRecurring = false,
@@ -242,10 +314,21 @@ exports.createTransactionService = async (userId, payload) => {
     });
     await transaction.populate("recurringTransaction");
   } else {
-    await autoDetectRecurringFromTransactionsService(userId, transaction);
+    const recurring = await autoDetectRecurringFromTransactionsService(
+      userId,
+      transaction,
+    );
+    if (recurring?.active !== false) {
+      transaction.isRecurring = true;
+      transaction.recurringTransaction = recurring._id;
+      await transaction.save();
+    }
   }
 
-  return transaction;
+  const [hydratedTransaction] = await hydrateTransactionsRecurringMetadata(userId, [
+    transaction,
+  ]);
+  return hydratedTransaction;
 };
 
 exports.getTransactionsService = async (userId, filters = {}) => {
@@ -313,8 +396,13 @@ exports.getTransactionsService = async (userId, filters = {}) => {
   const totalPages = pageSize ? Math.max(Math.ceil(total / pageSize), 1) : 1;
   const currentPage = effectiveLimit ? Math.max(requestedPage, 1) : 1;
 
-  return {
+  const hydratedTransactions = await hydrateTransactionsRecurringMetadata(
+    userId,
     transactions,
+  );
+
+  return {
+    transactions: hydratedTransactions,
     pagination: {
       total,
       pageSize,
@@ -921,7 +1009,10 @@ exports.updateTransactionService = async (userId, transactionId, payload) => {
     );
   }
 
-  return transaction;
+  const [hydratedTransaction] = await hydrateTransactionsRecurringMetadata(userId, [
+    transaction,
+  ]);
+  return hydratedTransaction;
 };
 
 exports.deleteTransactionService = async (userId, transactionId) => {
