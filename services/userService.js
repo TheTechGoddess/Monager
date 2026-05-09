@@ -19,17 +19,10 @@ const MAX_PROFILE_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const SETTINGS_INCOME_SIGNATURE_PREFIX = "settings-income:";
 const SETTINGS_TAX_SIGNATURE = "settings-tax";
 
-const getNextMonthlyRunDate = () => {
+const getInitialMonthlyRunDate = () => {
   const now = new Date();
-  const nextMonth = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-  );
-  const day = now.getUTCDate();
-  const lastDay = new Date(
-    Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 0),
-  ).getUTCDate();
   return new Date(
-    Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth(), Math.min(day, lastDay)),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   );
 };
 
@@ -56,7 +49,6 @@ const syncMonthlyIncomeRecurring = async (userId, monthlyIncome = []) => {
     "Salary",
     "income",
   );
-  const nextRunDate = getNextMonthlyRunDate();
 
   const activeSignatures = [];
   for (const item of monthlyIncome) {
@@ -66,6 +58,10 @@ const syncMonthlyIncomeRecurring = async (userId, monthlyIncome = []) => {
 
     const signature = `${SETTINGS_INCOME_SIGNATURE_PREFIX}${company.toLowerCase()}`;
     activeSignatures.push(signature);
+    const existing = await RecurringTransaction.findOne({ userId, signature }).select(
+      "nextRunDate",
+    );
+    const nextRunDate = existing?.nextRunDate || getInitialMonthlyRunDate();
 
     await RecurringTransaction.findOneAndUpdate(
       { userId, signature },
@@ -100,7 +96,6 @@ const syncMonthlyIncomeRecurring = async (userId, monthlyIncome = []) => {
 };
 
 const syncTaxRecurring = async (userId, tax) => {
-  const nextRunDate = getNextMonthlyRunDate();
   const amount = Number(tax);
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -116,6 +111,11 @@ const syncTaxRecurring = async (userId, tax) => {
     "Taxes",
     "expense",
   );
+  const existing = await RecurringTransaction.findOne({
+    userId,
+    signature: SETTINGS_TAX_SIGNATURE,
+  }).select("nextRunDate");
+  const nextRunDate = existing?.nextRunDate || getInitialMonthlyRunDate();
 
   await RecurringTransaction.findOneAndUpdate(
     { userId, signature: SETTINGS_TAX_SIGNATURE },
